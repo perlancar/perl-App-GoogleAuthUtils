@@ -47,6 +47,8 @@ _
                 secret_key => '6XDT6TSOGR5SCWKHXZ4DFBRXJVZGAKAW',
                 issuer => 'example.com',
             },
+            test => 0,
+            'x.doc.show_result' => 0,
         },
     ],
 };
