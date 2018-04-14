@@ -1,3 +1,12 @@
+0.003   2018-04-14 (PERLANCAR)
+
+	- No functional changes.
+
+	- [ux] Make CLI not read config/env.
+
+	- Tweak Rinci example spec.
+
+
 0.002   2018-04-14 (PERLANCAR)
 
 	- If qrencode is installed, use it instead of using online
