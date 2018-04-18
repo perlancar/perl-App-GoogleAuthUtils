@@ -40,6 +40,10 @@ _
             schema => 'str*',
             pos => 2,
         },
+        output => {
+            schema => 'filename*',
+            cmdline_aliases => {o=>{}},
+        },
     },
     examples => [
         {
@@ -53,23 +57,50 @@ _
     ],
 };
 sub gen_google_auth_qrcode {
+    require File::Which;
+    require String::ShellQuote;
     require URI::Encode;
 
     my %args = @_;
 
-    my $url = join(
-        '',
-        'https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr',
-        '&chl=otpauth://totp/', (
-            URI::Encode::uri_encode(
-                $args{issuer} . ($args{account} ? ":$args{account}" : "")),
-            '%3Fsecret%3D', $args{secret_key}, '%26issuer%3D', $args{issuer},
-        ),
-    );
+    if (File::Which::which("qrencode")) {
+        my $output = $args{output} // '-';
 
-    require Browser::Open;
-    my $err = Browser::Open::open_browser($url);
-    return [500, "Can't open browser for '$url'"] if $err;
+        my $cmd = join(
+            "",
+            "qrencode -o ", String::ShellQuote::shell_quote($output),
+            " -d 300 -s 10 ",
+            String::ShellQuote::shell_quote(
+                join(
+                    "",
+                    "otpauth://totp/",
+                    URI::Encode::uri_encode($args{issuer} . ($args{account} ? ":$args{account}" : "")),
+                    "?secret=", $args{secret_key},
+                    "&issuer=", $args{issuer},
+                )
+            ),
+        );
+        if ($output eq '-') {
+            system "$cmd | display";
+        } else {
+            system $cmd;
+        }
+    } else {
+        my $url = join(
+            '',
+            'https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr',
+            '&chl=otpauth://totp/', (
+                URI::Encode::uri_encode(
+                    $args{issuer} . ($args{account} ? ":$args{account}" : "")),
+                '%3Fsecret%3D', $args{secret_key},
+                '%26issuer%3D', $args{issuer},
+            ),
+        );
+
+        require Browser::Open;
+        my $err = Browser::Open::open_browser($url);
+        return [500, "Can't open browser for '$url'"] if $err;
+    }
     [200];
 }
 
@@ -84,5 +115,7 @@ This distributions provides the following command-line utilities:
 
 
 =head1 SEE ALSO
+
+L<App::QRCodeUtils>
 
 =cut
