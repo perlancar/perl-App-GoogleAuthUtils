@@ -40,6 +40,10 @@ _
             schema => 'str*',
             pos => 2,
         },
+        output => {
+            schema => 'filename*',
+            cmdline_aliases => {o=>{}},
+        },
     },
     examples => [
         {
@@ -60,9 +64,12 @@ sub gen_google_auth_qrcode {
     my %args = @_;
 
     if (File::Which::which("qrencode")) {
+        my $output = $args{output} // '-';
+
         my $cmd = join(
             "",
-            "qrencode -o- -d 300 -s 10 ",
+            "qrencode -o ", String::ShellQuote::shell_quote($output),
+            " -d 300 -s 10 ",
             String::ShellQuote::shell_quote(
                 join(
                     "",
@@ -73,7 +80,11 @@ sub gen_google_auth_qrcode {
                 )
             ),
         );
-        system "$cmd | display";
+        if ($output eq '-') {
+            system "$cmd | display";
+        } else {
+            system $cmd;
+        }
     } else {
         my $url = join(
             '',
